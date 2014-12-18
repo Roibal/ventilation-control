@@ -1,20 +1,25 @@
 import RPi.GPIO as GPIO
+import time  
 
 GPIO.setmode(GPIO.BCM)
-GPIO.setup(23, GPIO.IN, pull_up_down = GPIO.PUD_DOWN)
-GPIO.setup(24, GPIO.IN, pull_up_down = GPIO.PUD_UP)
+
+SWITCH1 = 23
+GPIO.setup(SWITCH1, GPIO.IN, pull_up_down = GPIO.PUD_DOWN)
+
+LED = 18
+GPIO.setup(LED, GPIO.OUT)
 
 def printFunction(channel):
     print(“Button 1 pressed!”)
-    print(“Note how the bouncetime affects the button press”)
+    #print(“Note how the bouncetime affects the button press”)
+    GPIO.output(LED, not GPIO.input(LED))
 
-GPIO.add_event_detect(23, GPIO.RISING, callback=printFunction, bouncetime=300)
+GPIO.add_event_detect(SWITCH1, GPIO.RISING, callback=printFunction, bouncetime=300)
 
-while True:
-    GPIO.wait_for_edge(24, GPIO.FALLING)
-    print(“Button 2 Pressed”)
+print("Here we go! Press CTRL+C to exit")
+try:
+    while True:
+        time.sleep(1)
 
-    GPIO.wait_for_edge(24, GPIO.RISING)
-    print(“Button 2 Released”)
-
-GPIO.cleanup()
+except KeyboardInterrupt: # If CTRL+C is pressed, exit cleanly:
+    GPIO.cleanup()
