@@ -1,17 +1,21 @@
+#!/usr/local/bin/python
+# coding: ascii
+
+
 import RPi.GPIO as GPIO
 import time  
 
 GPIO.setmode(GPIO.BCM)
 
-SWITCH1 = 23
-GPIO.setup(SWITCH1, GPIO.IN, pull_up_down = GPIO.PUD_DOWN)
+SWITCH1 = 22
+GPIO.setup(SWITCH1, GPIO.IN, pull_up_down = GPIO.PUD_UP)
 
-LED = 18
+LED = 17
 GPIO.setup(LED, GPIO.OUT)
 
 def printFunction(channel):
-    print(“Button 1 pressed!”)
-    #print(“Note how the bouncetime affects the button press”)
+    print("Button 1 pressed!")
+    #print("Note how the bouncetime affects the button press")
     GPIO.output(LED, not GPIO.input(LED))
 
 GPIO.add_event_detect(SWITCH1, GPIO.RISING, callback=printFunction, bouncetime=300)
