@@ -1,0 +1,3 @@
+[submodule "lnetatmo"]
+	path = lnetatmo
+	url = https://github.com/philippelt/netatmo-api-python.git
