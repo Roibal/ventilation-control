@@ -1,7 +1,6 @@
 #!/usr/local/bin/python
 # coding: ascii
 
-
 import RPi.GPIO as GPIO
 import time  
 
