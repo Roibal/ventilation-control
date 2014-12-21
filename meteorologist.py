@@ -1,6 +1,7 @@
 #!/usr/local/bin/python
 # coding: ascii
 
+import ConfigParser
 import argparse
 import sys
 
@@ -8,21 +9,38 @@ sys.path.insert(0, './lnetatmo')
 import lnetatmo
 
 def main(args):
-    # 1 : Authenticate
+
     authorization = lnetatmo.ClientAuth( clientId = args.clientid,
                                          clientSecret = args.clientsecret,
                                          username = args.username,
                                          password = args.password
                                        )
-
-    # 2 : Get devices list
+    
     devList = lnetatmo.DeviceList(authorization)
 
-    # 3 : Access most fresh data directly
-    print ("Current temperature (inside/outside): %s / %s C" %
-            ( devList.lastData()['Innen']['Temperature'],
-              devList.lastData()['Outdoor']['Temperature'])
-    )
+
+    Config = ConfigParser.ConfigParser()
+    Config.read("ventilation.cfg")
+    sections = Config.sections()
+    for section in sections:
+        insideSensorName = Config.get(section, "InsideSensorName")
+        outsideSensorName = Config.get(section, "OutsideSensorName")
+        minInsideTemp = Config.getfloat(section, "MinimumInsideTemperaturInDegreeCentigrade")
+
+        print ("Current inside temperature/humidity of sensor '%s': %s C / %s %%" %
+                (
+                    insideSensorName,
+                    devList.lastData()[insideSensorName]['Temperature'],
+                    devList.lastData()[insideSensorName]['Humidity']
+                )
+              )
+        print ("Current ouside temperature/humidity of sensor '%s': %s C / %s %%" %
+                (
+                    outsideSensorName,
+                    devList.lastData()[outsideSensorName]['Temperature'],
+                    devList.lastData()[outsideSensorName]['Humidity']
+                )
+              )
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Meteorologist', version='%(prog)s 0.1')
