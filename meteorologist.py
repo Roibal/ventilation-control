@@ -8,6 +8,30 @@ import sys
 sys.path.insert(0, './lnetatmo')
 import lnetatmo
 
+def configureRoom(config, devlist, roomName):
+    # create indoor sensor
+    # create outdoor sensor
+    # create room 
+
+    insideSensorName = config.get(section, "InsideSensorName")
+    outsideSensorName = config.get(section, "OutsideSensorName")
+    minInsideTemp = config.getfloat(section, "MinimumInsideTemperaturInDegreeCentigrade")
+
+    print ("Current inside temperature/humidity of sensor '%s': %s C / %s %%" %
+            (
+                insideSensorName,
+                devList.lastData()[insideSensorName]['Temperature'],
+                devList.lastData()[insideSensorName]['Humidity']
+            )
+          )
+    print ("Current ouside temperature/humidity of sensor '%s': %s C / %s %%" %
+            (
+                outsideSensorName,
+                devList.lastData()[outsideSensorName]['Temperature'],
+                devList.lastData()[outsideSensorName]['Humidity']
+            )
+          )
+
 def main(args):
 
     authorization = lnetatmo.ClientAuth( clientId = args.clientid,
@@ -18,29 +42,19 @@ def main(args):
     
     devList = lnetatmo.DeviceList(authorization)
 
-
-    Config = ConfigParser.ConfigParser()
-    Config.read("ventilation.cfg")
-    sections = Config.sections()
+    config = ConfigParser.ConfigParser()
+    config.read("ventilation.cfg")
+    
+    # configure every room with its sensors
+    sections = config.sections()
     for section in sections:
-        insideSensorName = Config.get(section, "InsideSensorName")
-        outsideSensorName = Config.get(section, "OutsideSensorName")
-        minInsideTemp = Config.getfloat(section, "MinimumInsideTemperaturInDegreeCentigrade")
+        sectionParts = section.split("_")
 
-        print ("Current inside temperature/humidity of sensor '%s': %s C / %s %%" %
-                (
-                    insideSensorName,
-                    devList.lastData()[insideSensorName]['Temperature'],
-                    devList.lastData()[insideSensorName]['Humidity']
-                )
-              )
-        print ("Current ouside temperature/humidity of sensor '%s': %s C / %s %%" %
-                (
-                    outsideSensorName,
-                    devList.lastData()[outsideSensorName]['Temperature'],
-                    devList.lastData()[outsideSensorName]['Humidity']
-                )
-              )
+        sectionType = sectionParts[0]
+        if sectionType == "Room":
+            roomName = sectionParts[1]
+            configureRoom(config, devlist, roomName)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Meteorologist', version='%(prog)s 0.1')
