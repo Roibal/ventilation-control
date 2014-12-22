@@ -8,39 +8,75 @@ import sys
 sys.path.insert(0, './lnetatmo')
 import lnetatmo
 
-def configureRoom(config, devlist, roomName):
+# globals
+natatmoAuthorization = None
+netatmoDevList = None
+
+class Sensor:
+    def getHumidity(self):
+        raise NotImplementedError( "Should have implemented this" )
+    def getTemperature(self):
+        raise NotImplementedError( "Should have implemented this" )
+
+class NetatmoSensor(Sensor):
+    def __init__(self, netatmoName):
+        self.netatmoName = netatmoName
+
+    def getHumidity(self):
+        #print("Trying to get Humidity from %s" % self.netatmoName)
+        return netatmoDevList.lastData()[self.netatmoName]['Humidity']
+
+    def getTemperature(self):
+        #print("Trying to get Temperature from %s" % self.netatmoName)
+        return netatmoDevList.lastData()[self.netatmoName]['Temperature']
+
+
+def getSensorByName(config, sensorName):
+    sensorType = config.get(sensorName, "Type")
+
+    sensor = None
+
+    if sensorType == "Netatmo":
+        netatmoName = config.get(sensorName, "NetatmoName")
+        sensor = NetatmoSensor(netatmoName)
+
+    return sensor
+
+
+def configureRoom(config, roomName):
     # create indoor sensor
     # create outdoor sensor
-    # create room 
+    # create room
 
-    insideSensorName = config.get(section, "InsideSensorName")
-    outsideSensorName = config.get(section, "OutsideSensorName")
+    section = "Room_" + roomName
+
+    insideSensorName = config.get(section, "InsideSensor")
+    outsideSensorName = config.get(section, "OutsideSensor")
     minInsideTemp = config.getfloat(section, "MinimumInsideTemperaturInDegreeCentigrade")
 
-    print ("Current inside temperature/humidity of sensor '%s': %s C / %s %%" %
+    insideSensor = getSensorByName(config, insideSensorName)
+
+    print ("Room %s, Sensor %s: Temperature %s C, Humidity %s %%" %
             (
-                insideSensorName,
-                devList.lastData()[insideSensorName]['Temperature'],
-                devList.lastData()[insideSensorName]['Humidity']
-            )
-          )
-    print ("Current ouside temperature/humidity of sensor '%s': %s C / %s %%" %
-            (
-                outsideSensorName,
-                devList.lastData()[outsideSensorName]['Temperature'],
-                devList.lastData()[outsideSensorName]['Humidity']
+                roomName,
+                insideSensor.netatmoName,
+                insideSensor.getTemperature(),
+                insideSensor.getHumidity()
             )
           )
 
 def main(args):
 
-    authorization = lnetatmo.ClientAuth( clientId = args.clientid,
+    global natatmoAuthorization
+    #print ("%s %s %s %s" % (args.clientid, args.clientsecret, args.username, args.password))
+    natatmoAuthorization = lnetatmo.ClientAuth( clientId = args.clientid,
                                          clientSecret = args.clientsecret,
                                          username = args.username,
                                          password = args.password
                                        )
     
-    devList = lnetatmo.DeviceList(authorization)
+    global netatmoDevList
+    netatmoDevList = lnetatmo.DeviceList(natatmoAuthorization)
 
     config = ConfigParser.ConfigParser()
     config.read("ventilation.cfg")
@@ -53,7 +89,7 @@ def main(args):
         sectionType = sectionParts[0]
         if sectionType == "Room":
             roomName = sectionParts[1]
-            configureRoom(config, devlist, roomName)
+            configureRoom(config, roomName)
 
 
 if __name__ == '__main__':
