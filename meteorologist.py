@@ -9,6 +9,7 @@ sys.path.insert(0, './lnetatmo')
 import lnetatmo
 
 # globals
+args = None
 natatmoAuthorization = None
 netatmoDevList = None
 
@@ -24,11 +25,22 @@ class NetatmoSensor(Sensor):
 
     def getHumidity(self):
         #print("Trying to get Humidity from %s" % self.netatmoName)
-        return netatmoDevList.lastData()[self.netatmoName]['Humidity']
+        return getNetatmoDevList().lastData()[self.netatmoName]['Humidity']
 
     def getTemperature(self):
         #print("Trying to get Temperature from %s" % self.netatmoName)
-        return netatmoDevList.lastData()[self.netatmoName]['Temperature']
+        return getNetatmoDevList().lastData()[self.netatmoName]['Temperature']
+
+class DemoSensor(Sensor):
+    def __init__(self, temperature, humidity):
+        self.temperature = temperature
+        self.humidity = humidity
+
+    def getHumidity(self):
+        return self.humidity
+
+    def getTemperature(self):
+        return self.temperature
 
 
 def getSensorByName(config, sensorName):
@@ -39,6 +51,10 @@ def getSensorByName(config, sensorName):
     if sensorType == "Netatmo":
         netatmoName = config.get(sensorName, "NetatmoName")
         sensor = NetatmoSensor(netatmoName)
+    elif sensorType == "Demo":
+        temperature = config.getfloat(sensorName, "Temperature")
+        humidity = config.getfloat(sensorName, "Humidity")
+        sensor = DemoSensor(temperature, humidity)
 
     return sensor
 
@@ -56,27 +72,32 @@ def configureRoom(config, roomName):
 
     insideSensor = getSensorByName(config, insideSensorName)
 
-    print ("Room %s, Sensor %s: Temperature %s C, Humidity %s %%" %
+    print ("Room %s: Temperature %s C, Humidity %s %%" %
             (
                 roomName,
-                insideSensor.netatmoName,
                 insideSensor.getTemperature(),
                 insideSensor.getHumidity()
             )
           )
 
-def main(args):
-
+def getNetatmoDevList():
     global natatmoAuthorization
-    #print ("%s %s %s %s" % (args.clientid, args.clientsecret, args.username, args.password))
-    natatmoAuthorization = lnetatmo.ClientAuth( clientId = args.clientid,
+    global netatmoDevList
+
+    if natatmoAuthorization == None:
+        #print ("%s %s %s %s" % (args.clientid, args.clientsecret, args.username, args.password))
+        natatmoAuthorization = lnetatmo.ClientAuth( clientId = args.clientid,
                                          clientSecret = args.clientsecret,
                                          username = args.username,
                                          password = args.password
                                        )
     
-    global netatmoDevList
-    netatmoDevList = lnetatmo.DeviceList(natatmoAuthorization)
+        netatmoDevList = lnetatmo.DeviceList(natatmoAuthorization)
+
+        return netatmoDevList
+
+
+def main():
 
     config = ConfigParser.ConfigParser()
     config.read("ventilation.cfg")
@@ -93,10 +114,14 @@ def main(args):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Meteorologist', version='%(prog)s 0.1')
-    parser.add_argument('--clientid', type=str, required=True, help='Netatmo CLIENT_ID')
-    parser.add_argument('--clientsecret', type=str, required=True, help='Netatmo CLIENT_SECRET')
-    parser.add_argument('--username', type=str, required=True, help='Netatmo USERNAME')
-    parser.add_argument('--password', type=str, required=True, help='Netatmo PASSWORD')
-    args = parser.parse_args()
-    main(args)
+    if len(sys.argv) > 1:
+        parser = argparse.ArgumentParser(description='Meteorologist', version='%(prog)s 0.1')
+        parser.add_argument('--clientid', type=str, help='Netatmo CLIENT_ID')
+        parser.add_argument('--clientsecret', type=str, help='Netatmo CLIENT_SECRET')
+        parser.add_argument('--username', type=str, help='Netatmo USERNAME')
+        parser.add_argument('--password', type=str, help='Netatmo PASSWORD')
+        args = parser.parse_args()
+    else:
+        print("No arguments given, running in DEMO mode")
+
+    main()
