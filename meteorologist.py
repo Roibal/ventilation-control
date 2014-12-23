@@ -42,6 +42,16 @@ class DemoSensor(Sensor):
     def getTemperature(self):
         return self.temperature
 
+class Room:
+    name = "Room-with-no-name"
+    insideSensor = None
+    outsideSensor = None
+    minInsideTemp = 0.0
+
+    def __str__(self):
+        return "Room: " + self.name + ", Temperature(in/out): " + str(self.insideSensor.getTemperature()) + " / " + str(self.outsideSensor.getTemperature())
+
+
 
 def getSensorByName(config, sensorName):
     sensorType = config.get(sensorName, "Type")
@@ -70,15 +80,12 @@ def configureRoom(config, roomName):
     outsideSensorName = config.get(section, "OutsideSensor")
     minInsideTemp = config.getfloat(section, "MinimumInsideTemperaturInDegreeCentigrade")
 
-    insideSensor = getSensorByName(config, insideSensorName)
+    room = Room()
+    room.insideSensor = getSensorByName(config, insideSensorName)
+    room.outsideSensor = getSensorByName(config, outsideSensorName)
 
-    print ("Room %s: Temperature %s C, Humidity %s %%" %
-            (
-                roomName,
-                insideSensor.getTemperature(),
-                insideSensor.getHumidity()
-            )
-          )
+    return room
+
 
 def getNetatmoDevList():
     global natatmoAuthorization
@@ -99,6 +106,8 @@ def getNetatmoDevList():
 
 def main():
 
+    rooms = []
+
     config = ConfigParser.ConfigParser()
     config.read("ventilation.cfg")
     
@@ -110,7 +119,9 @@ def main():
         sectionType = sectionParts[0]
         if sectionType == "Room":
             roomName = sectionParts[1]
-            configureRoom(config, roomName)
+            room = configureRoom(config, roomName)
+            rooms.append(room)
+            print ("%s" % room)
 
 
 if __name__ == '__main__':
