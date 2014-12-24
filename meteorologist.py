@@ -8,12 +8,13 @@ import sys
 sys.path.insert(0, './lnetatmo')
 import lnetatmo
 
-import weathermath
+from weathermath import AF
 
 # globals
 args = None
 natatmoAuthorization = None
 netatmoDevList = None
+
 
 class Sensor:
     def getHumidity(self):
@@ -49,6 +50,7 @@ class Room:
     insideSensor = None
     outsideSensor = None
     minInsideTemp = 0.0
+    minHumidDiff = 0.0
 
     def __str__(self):
         return "Room: " + self.name + ", Temperature(in/out): " + str(self.insideSensor.getTemperature()) + " / " + str(self.outsideSensor.getTemperature())
@@ -71,7 +73,7 @@ def getSensorByName(config, sensorName):
     return sensor
 
 
-def configureRoom(config, roomName):
+def createRoom(config, roomName):
     # create indoor sensor
     # create outdoor sensor
     # create room
@@ -81,6 +83,7 @@ def configureRoom(config, roomName):
     insideSensorName = config.get(section, "InsideSensor")
     outsideSensorName = config.get(section, "OutsideSensor")
     minInsideTemp = config.getfloat(section, "MinimumInsideTemperaturInDegreeCentigrade")
+    minHumidDiff = config.getfloat(section, "MinimumHumidityDifference")
 
     room = Room()
     room.insideSensor = getSensorByName(config, insideSensorName)
@@ -106,6 +109,24 @@ def getNetatmoDevList():
         return netatmoDevList
 
 
+def configureRoom(room):
+    insideTemp = room.insideSensor.getTemperature()
+    insideRelHumid = room.insideSensor.getHumidity()
+    insideAbsHumid = AF(insideRelHumid, insideTemp)
+
+    outsideTemp = room.outsideSensor.getTemperature()
+    outsideRelHumid = room.outsideSensor.getHumidity()
+    outsideAbsHumid = AF(outsideRelHumid, insideTemp)
+
+    recommendVentilation = False
+
+    if insideAbsHumid - room.minHumidDiff > outsideAbsHumid:
+        recommendVentilation = True
+
+    if insideTemp <= room.minInsideTemp:
+        recommendVentilation = False
+
+
 def main():
 
     rooms = []
@@ -121,9 +142,12 @@ def main():
         sectionType = sectionParts[0]
         if sectionType == "Room":
             roomName = sectionParts[1]
-            room = configureRoom(config, roomName)
+            room = createRoom(config, roomName)
             rooms.append(room)
-            print ("%s" % room)
+            #print ("%s" % room)
+
+    for room in rooms:
+        configureRoom(room)
 
 
 if __name__ == '__main__':
