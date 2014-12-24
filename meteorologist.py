@@ -1,5 +1,5 @@
 #!/usr/local/bin/python
-# coding: ascii
+# coding: utf-8
 
 import ConfigParser
 import argparse
@@ -7,6 +7,8 @@ import sys
 
 sys.path.insert(0, './lnetatmo')
 import lnetatmo
+
+import weathermath
 
 # globals
 args = None
