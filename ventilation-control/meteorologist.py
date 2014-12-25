@@ -5,7 +5,7 @@ import ConfigParser
 import argparse
 import sys
 
-sys.path.insert(0, './lnetatmo')
+sys.path.insert(0, '../lnetatmo')
 import lnetatmo
 
 import weathermath

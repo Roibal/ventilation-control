@@ -35,8 +35,7 @@ TD(r,T) = b*v/(a-v) mit v(r,T) = log10(DD(r,T)/6.1078)
 AF(r,TK) = 10^5 * mw/R* * DD(r,T)/TK; AF(TD,TK) = 10^5 * mw/R* * SDD(TD)/TK
 '''
 
-from math import pow
-import unittest
+import math
 
 R = 8314.3
 mw = 18.016
@@ -49,7 +48,7 @@ def SDD(T):
         a = 7.6
         b = 240.7
 
-    return 6.1078 * pow( 10, ( (a*T)/(b+T) ) )
+    return 6.1078 * math.pow( 10, ( (a*T)/(b+T) ) )
 
 def DD(r, T):
     return (r/100.0) * SDD(T)
@@ -57,18 +56,4 @@ def DD(r, T):
 def AF(r, T):
     TK = T + 273.15
     return 100000 * mw/R * DD(r, T)/TK
-
-
-# python -m unittest weathermath
-class TestWeathermath(unittest.TestCase):
-
-    def test_SDD(self):
-        self.assertAlmostEqual( SDD(20), 23.38, 2 )
-
-    def test_DD(self):
-        self.assertAlmostEqual( DD(60, 20), 14.03, 2 )
-
-    def test_AF(self):
-        self.assertAlmostEqual( AF(60, 20), 10.4, 1 )
-
 
