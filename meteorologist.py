@@ -8,7 +8,7 @@ import sys
 sys.path.insert(0, './lnetatmo')
 import lnetatmo
 
-from weathermath import AF
+import weathermath
 
 # globals
 args = None
@@ -112,11 +112,11 @@ def getNetatmoDevList():
 def configureRoom(room):
     insideTemp = room.insideSensor.getTemperature()
     insideRelHumid = room.insideSensor.getHumidity()
-    insideAbsHumid = AF(insideRelHumid, insideTemp)
+    insideAbsHumid = weathermath.AF(insideRelHumid, insideTemp)
 
     outsideTemp = room.outsideSensor.getTemperature()
     outsideRelHumid = room.outsideSensor.getHumidity()
-    outsideAbsHumid = AF(outsideRelHumid, insideTemp)
+    outsideAbsHumid = weathermath.AF(outsideRelHumid, insideTemp)
 
     recommendVentilation = False
 
