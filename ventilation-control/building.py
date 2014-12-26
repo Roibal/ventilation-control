@@ -42,10 +42,21 @@ class DemoSensor(Sensor):
         #print("DEMO: getTemperature() %s" % self.temperature)
         return self.temperature
 
+class Actor:
+    name = "Actor-with-no-name"
+
+    def setPowerOn(self, on):
+        raise NotImplementedError( "Should have implemented this" )
+
+class DemoActor(Actor):
+    def setPowerOn(self, on):
+        print( "Switching actor %s to %r" % (self.name, on) )
+
 class Room:
     name = "Room-with-no-name"
     insideSensor = None
     outsideSensor = None
+    actor = None
     minInsideTemp = 0.0
     minHumidDiff = 0.0
 
@@ -62,6 +73,7 @@ class Room:
             "  Minimum inside temperatur: " + str(self.minInsideTemp) + \
             "\n" + \
             "  Minimum Humidity difference: " + str(self.minHumidDiff)
+
 
 def getNetatmoDevList():
     global natatmoAuthorization
@@ -95,16 +107,28 @@ def getSensorByName(config, sensorName):
 
     return sensor
 
+def getActorByName(config, actorName):
+    actorType = config.get(actorName, "Type")
+
+    actor = None
+
+    if actorType == "Demo":
+        actor = DemoActor()
+        actor.name = actorName
+
+    return actor
 
 def createRoom(config, roomName):
     section = "Room_" + roomName
     insideSensorName = config.get(section, "InsideSensor")
     outsideSensorName = config.get(section, "OutsideSensor")
+    actorName = config.get(section, "Actor")
 
     room = Room()
     room.name = roomName
     room.insideSensor = getSensorByName(config, insideSensorName)
     room.outsideSensor = getSensorByName(config, outsideSensorName)
+    room.actor = getActorByName(config, actorName)
     room.minInsideTemp = config.getfloat(section, "MinimumInsideTemperaturInDegreeCentigrade")
     room.minHumidDiff = config.getfloat(section, "MinimumHumidityDifference")
 

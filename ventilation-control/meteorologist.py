@@ -25,7 +25,6 @@ def processRoom(room):
 
 
 def main():
-
     rooms = building.getRooms()
 
     for room in rooms:
