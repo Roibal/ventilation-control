@@ -27,13 +27,16 @@ class Handler(BaseHTTPRequestHandler):
     
     # Handler for the GET requests
     def do_GET(self):
-        if self.path == "/" or self.path == "/index.html":
+        if self.path == "/":
+            self.path = "/index.html"
+
+        if self.path == "/index.html":
             mimetype = "text/html"
-            sendFile(self, mimetype, self.path)
+            self.sendFile(mimetype, self.path)
         
         elif self.path == "/style.css":
             mimetype="text/css"
-            sendFile(self, mimetype, self.path)
+            self.sendFile(mimetype, self.path)
 
         elif self.path == "/weather.json":
             mimetype = "application/json"

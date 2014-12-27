@@ -1,0 +1,41 @@
+body            { font-family: sans-serif; background: #eee; }
+a, h1, h2       { color: #377BA8; }
+h1              { font-weight: normal; border-bottom: 2px solid #eee; }
+h2              { font-weight: normal; }
+pre             { font-size: small; padding: 0.3em; margin: 0; }
+img             { vertical-align:text-bottom; }
+
+.message pre    { display:none; }
+
+.active         { background: #eeeeee; border-radius: 3px; }
+.top-nav a      { padding: 5px; }
+
+.page           { margin: 2em auto; width: 1000px; border: 5px solid #ccc;
+                  padding: 1.5em; background: white; }
+
+.top            { display: block; overflow: hidden; margin-bottom: 1.5em;}
+.top-title      { float: left; font-size: 2em; color: #377BA8; }
+.top-nav        { float: right; padding-top: 5px;}
+
+.flash          { background: #CEE5F5; padding: 0.5em;
+                  border: 1px solid #AACBE2; }
+.error          { background: #F0D6D6; padding: 0.5em; }
+
+.messages       { list-style-type: none; padding-left: 0}
+.message        { border: 1px solid #ccc; margin-bottom: 0.5em; }
+.header         { display: block; overflow: hidden; padding: 0.3em;}
+
+.red            { background: rgb(245,245,245); }
+.green          { background: rgb(245,245,245); }
+
+
+.from           { font-family: monospace; font-size: medium; font-weight: normal;
+                  float: left; width: 25%;}
+
+.subject        { font-family: monospace; font-size: medium; font-weight: bold;
+                  float: left;}
+
+#rules_table    { background: #fff; width: 480px; border-collapse: collapse; text-align: left; }
+#rules_table th { font-weight: bold; padding: 10px 8px; border-bottom: 2px solid #377BA8; }
+#rules_table td { border-bottom: 1px solid #ccc; padding: 6px 8px; }
+
