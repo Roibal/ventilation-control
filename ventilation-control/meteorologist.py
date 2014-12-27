@@ -33,7 +33,7 @@ def processRoom(room, db):
 
 def main():
 
-    con = None
+    db = None
 
     try:
         db = database.connect_db()
@@ -43,8 +43,8 @@ def main():
             processRoom(room, db)
 
     finally:
-        if con:
-            con.close()
+        if db:
+            db.close()
 
 
 if __name__ == '__main__':
