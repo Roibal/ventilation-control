@@ -5,8 +5,10 @@ import sys
 import argparse
 import weathermath
 import building
+import database
+from datetime import datetime
 
-def processRoom(room):
+def processRoom(room, db):
     insideTemp = room.insideSensor.getTemperature()
     insideRelHumid = room.insideSensor.getHumidity()
     insideAbsHumid = weathermath.AF(insideRelHumid, insideTemp)
@@ -23,12 +25,26 @@ def processRoom(room):
     if insideTemp <= room.minInsideTemp:
         recommendVentilation = False
 
+    c = db.cursor()
+    c.execute('insert into weather (date, room, inside_temperature, inside_humidity, ' +
+              'outside_temperature, outside_humidity, ventilation_recommended) values ' +
+              '(?, ?, ?, ?, ?, ?, ?)', (datetime.now(), room.name, insideTemp, insideRelHumid, outsideTemp, outsideRelHumid, recommendVentilation))
+    db.commit()
 
 def main():
-    rooms = building.getRooms()
 
-    for room in rooms:
-        processRoom(room)
+    con = None
+
+    try:
+        db = database.connect_db()
+        rooms = building.getRooms()
+
+        for room in rooms:
+            processRoom(room, db)
+
+    finally:
+        if con:
+            con.close()
 
 
 if __name__ == '__main__':

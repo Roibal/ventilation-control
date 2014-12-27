@@ -3,6 +3,7 @@ DROP TABLE IF EXISTS weather;
 CREATE TABLE weather (
   'id' integer primary key autoincrement,
   'date' text not null,
+  'room' text not null,
   'inside_temperature' REAL not null,
   'inside_humidity' REAL not null,
   'outside_temperature' REAL not null,
