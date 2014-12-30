@@ -69,16 +69,22 @@ class Handler(BaseHTTPRequestHandler):
        
 
     def display_room(self, roomName):
+        self.send_response(200)
+        self.send_header('Content-type', "text/html")
+        self.end_headers()
+
         self.print_page_header(roomName)
         self.wfile.write('<div id="container" style="width:100%; height:400px;"></div>\n')
         self.wfile.write('<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>\n')
         self.wfile.write('<script src="http://code.highcharts.com/stock/highstock.js"></script>\n')
 
+        host = self.headers.get('Host')
+
         s = """
 <script type="text/javascript">
 $(function () {
 
-    $.getJSON('http://www.highcharts.com/samples/data/jsonp.php?filename=aapl-c.json&callback=?', function (data) {
+    $.getJSON('http://%s/%s.json&callback=?', function (data) {
         // Create the chart
         $('#container').highcharts('StockChart', {
 
@@ -103,14 +109,18 @@ $(function () {
 
 });
 </script>
-"""
+""" % (host, roomName)
         self.wfile.write(s)
         self.print_room_footer()
 
-    def send_json_data(self):
+    def send_json_data(self, roomName):
+        self.send_response(200)
+        self.send_header('Content-type', 'application/json')
+        self.end_headers()
+
         with contextlib.closing(sqlite3.connect('meteorologist.db',detect_types=sqlite3.PARSE_DECLTYPES)) as database:
             with contextlib.closing(database.cursor()) as cursor:
-                cursor.execute('select date, inside_temperature from weather')
+                cursor.execute( 'select date, inside_temperature from weather where room=?', (roomName,) )
                 data = []
                 for date, inside_temperature in cursor:
                     # cut seconds and microsecound, we only have 5 min resolution
@@ -141,9 +151,9 @@ $(function () {
             roomName = self.path[6:]
             self.display_room(roomName)
 
-        elif self.path == '/weather.json':
-            mimetype = 'application/json'
-            self.send_json_data()
+        elif self.path.endswith('.json'):
+            roomName = self.path[1:-5]
+            self.send_json_data(roomName)
 
         else:
             self.send_error(404,'Not Found: %s' % self.path)
