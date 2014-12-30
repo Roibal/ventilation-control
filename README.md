@@ -15,3 +15,11 @@ Control
 =======
 
 The control.py script starts and stops fans attached to a relay board attached to the Raspberry Pi based on the data in the sqlite database.
+
+TODO
+====
+
+* implement RasperyPi actor in building.py
+* implement DHT22 sensor in building.py
+* implement control.py
+* implement report.py
