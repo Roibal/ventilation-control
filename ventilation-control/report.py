@@ -107,22 +107,22 @@ $(function () {
         self.wfile.write(s)
         self.print_room_footer()
 
-    def totimestamp(dt, epoch=datetime(1970,1,1)):
-        td = dt - epoch
-        # return td.total_seconds()
-        return (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 1e6
-
     def send_json_data(self):
         with contextlib.closing(sqlite3.connect('meteorologist.db',detect_types=sqlite3.PARSE_DECLTYPES)) as database:
             with contextlib.closing(database.cursor()) as cursor:
                 cursor.execute('select date, inside_temperature from weather')
                 data = []
                 for date, inside_temperature in cursor:
-                    s = self.totimestamp(date)
-                    print("%s-%s" % (date, s))
-                    data.append({s, inside_temperature})
+                    # cut seconds and microsecound, we only have 5 min resolution
+                    date = date.replace(second=0, microsecond=0)
+                    # convert to unix timestamp
+                    timestamp = (date - datetime(1970,1,1)).total_seconds()
 
-        #json.dump(data, self.wfile)
+                    data.append( [int(timestamp), float(inside_temperature)] )
+        
+        self.wfile.write('callback(\n')
+        json.dump(data, self.wfile)
+        self.wfile.write('\n);')
 
     
     # Handler for the GET requests
