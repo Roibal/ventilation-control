@@ -43,6 +43,7 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write('<div class=page>\n')
         self.wfile.write('<div class="top"><div class="top-title">%s</div></div>\n' % title)
 
+
     def print_room_footer(self):
          self.wfile.write('</div>\n')
          self.wfile.write('</body>\n')
@@ -84,7 +85,7 @@ class Handler(BaseHTTPRequestHandler):
 <script type="text/javascript">
 $(function () {
 
-    $.getJSON('http://%s/%s.json&callback=?', function (data) {
+    $.getJSON('http://%s/%s.json?callback=?', function (data) {
         // Create the chart
         $('#container').highcharts('StockChart', {
 
@@ -113,9 +114,10 @@ $(function () {
         self.wfile.write(s)
         self.print_room_footer()
 
-    def send_json_data(self, roomName):
+
+    def send_json_data(self, roomName, callbackName):
         self.send_response(200)
-        self.send_header('Content-type', 'application/json')
+        self.send_header('Content-type', 'text/javascript')
         self.end_headers()
 
         with contextlib.closing(sqlite3.connect('meteorologist.db',detect_types=sqlite3.PARSE_DECLTYPES)) as database:
@@ -127,10 +129,12 @@ $(function () {
                     date = date.replace(second=0, microsecond=0)
                     # convert to unix timestamp
                     timestamp = (date - datetime(1970,1,1)).total_seconds()
+                    # timestamp needs to be in milliseconds
+                    timestamp *= 1000
 
                     data.append( [int(timestamp), float(inside_temperature)] )
         
-        self.wfile.write('callback(\n')
+        self.wfile.write('%s(\n' % callbackName)
         json.dump(data, self.wfile)
         self.wfile.write('\n);')
 
@@ -151,9 +155,14 @@ $(function () {
             roomName = self.path[6:]
             self.display_room(roomName)
 
-        elif self.path.endswith('.json'):
-            roomName = self.path[1:-5]
-            self.send_json_data(roomName)
+        elif '.json' in self.path:
+            # get roomname and callback name (both dynamic)
+            index = self.path.find('.json')
+            roomName = self.path[1:index]
+            # .json?callback=
+            indexUnderscore = self.path.find('&_')
+            callbackName = self.path[index+15:indexUnderscore]
+            self.send_json_data(roomName, callbackName)
 
         else:
             self.send_error(404,'Not Found: %s' % self.path)
