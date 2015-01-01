@@ -75,7 +75,7 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
 
         self.print_page_header(roomName)
-        self.wfile.write('<div id="container" style="width:100%; height:400px;"></div>\n')
+        self.wfile.write('<div id="container" style="width:100%; height:600px;"></div>\n')
         self.wfile.write('<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>\n')
         self.wfile.write('<script src="http://code.highcharts.com/stock/highstock.js"></script>\n')
 
@@ -86,6 +86,23 @@ class Handler(BaseHTTPRequestHandler):
 $(function () {
 
     $.getJSON('http://%s/%s.json?callback=?', function (data) {
+        // split the data
+        var temp = [],
+            humid = [],
+            dataLength = data.length,
+            i = 0;
+
+        for (i; i < dataLength; i += 1) {
+            temp.push([
+                data[i][0], // the date
+                data[i][1]  // inside temp
+            ]);
+
+            humid.push([
+                data[i][2] // inside humidity
+            ]);
+        }
+
         // Create the chart
         $('#container').highcharts('StockChart', {
 
@@ -95,14 +112,46 @@ $(function () {
             },
 
             title : {
-                text : 'AAPL Stock Price'
+                text : 'Weather'
             },
 
+            yAxis: [{
+                labels: {
+                    align: 'right',
+                    x: -3
+                },
+                title: {
+                    text: 'Inside temp'
+                },
+                height: '48%%',
+                lineWidth: 2
+            }, {
+                labels: {
+                    align: 'right',
+                    x: -3
+                },
+                title: {
+                    text: 'Inside Humid'
+                },
+                top: '52%%',
+                height: '48%%',
+                offset: 0,
+                lineWidth: 2
+            }],
+
             series : [{
-                name : 'AAPL',
-                data : data,
+                type: 'line',
+                name : 'Inside temperature',
+                data : temp,
                 tooltip: {
-                    valueDecimals: 2
+                    valueDecimals: 1
+                }
+            }, {
+                type: 'line',
+                name : 'Inside humidity',
+                data : humid,
+                tooltip: {
+                    valueDecimals: 0
                 }
             }]
         });
@@ -122,9 +171,9 @@ $(function () {
 
         with contextlib.closing(sqlite3.connect('meteorologist.db',detect_types=sqlite3.PARSE_DECLTYPES)) as database:
             with contextlib.closing(database.cursor()) as cursor:
-                cursor.execute( 'select date, inside_temperature from weather where room=?', (roomName,) )
+                cursor.execute( 'select date, inside_temperature, inside_humidity, outside_temperature, outside_humidity from weather where room=?', (roomName,) )
                 data = []
-                for date, inside_temperature in cursor:
+                for date, inside_temperature, inside_humidity, outside_temperature, outside_humidity in cursor:
                     # cut seconds and microsecound, we only have 5 min resolution
                     date = date.replace(second=0, microsecond=0)
                     # convert to unix timestamp
@@ -132,7 +181,7 @@ $(function () {
                     # timestamp needs to be in milliseconds
                     timestamp *= 1000
 
-                    data.append( [int(timestamp), float(inside_temperature)] )
+                    data.append( [int(timestamp), float(inside_temperature), float(inside_humidity), float(outside_temperature), float(outside_humidity)] )
         
         self.wfile.write('%s(\n' % callbackName)
         json.dump(data, self.wfile)
