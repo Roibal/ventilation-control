@@ -7,10 +7,6 @@ import sys
 sys.path.insert(0, '../lnetatmo')
 import lnetatmo
 
-natatmoAuthorization = None
-netatmoDevList = None
-args = None
-
 class Sensor:
     def getHumidity(self):
         raise NotImplementedError( "Should have implemented this" )
@@ -20,14 +16,40 @@ class Sensor:
 class NetatmoSensor(Sensor):
     def __init__(self, netatmoName):
         self.netatmoName = netatmoName
+        self.natatmoAuthorization = None
+
+    def getNetatmoDevList(self):
+        netatmoDevList = None
+
+        if self.natatmoAuthorization == None:
+            config = ConfigParser.ConfigParser()
+            config.read("netatmo-auth.cfg")
+
+            if config.get("Netatmo_Auth", "clientsecret") == "":
+                raise RuntimeError('Netatmo authentication information are missing in netatmo-auth.cfg')
+
+            self.natatmoAuthorization = lnetatmo.ClientAuth( clientId = config.get("Netatmo_Auth", "clientid"),
+                                                             clientSecret = config.get("Netatmo_Auth", "clientsecret"),
+                                                             username = config.get("Netatmo_Auth", "username"),
+                                                             password = config.get("Netatmo_Auth", "password") )
+
+            if self.natatmoAuthorization == None:
+                raise RuntimeError('Netatmo authentication failed')
+        
+        netatmoDevList = lnetatmo.DeviceList(self.natatmoAuthorization)
+
+        if netatmoDevList == None:
+            raise RuntimeError('Could not get Netatmo device list')
+
+        return netatmoDevList
 
     def getHumidity(self):
         #print("Trying to get Humidity from %s" % self.netatmoName)
-        return getNetatmoDevList().lastData()[self.netatmoName]['Humidity']
+        return self.getNetatmoDevList().lastData()[self.netatmoName]['Humidity']
 
     def getTemperature(self):
         #print("Trying to get Temperature from %s" % self.netatmoName)
-        return getNetatmoDevList().lastData()[self.netatmoName]['Temperature']
+        return self.getNetatmoDevList().lastData()[self.netatmoName]['Temperature']
 
 class DemoSensor(Sensor):
     def __init__(self, temperature, humidity):
@@ -73,23 +95,6 @@ class Room:
             "  Minimum inside temperatur: " + str(self.minInsideTemp) + \
             "\n" + \
             "  Minimum Humidity difference: " + str(self.minHumidDiff)
-
-
-def getNetatmoDevList():
-    global natatmoAuthorization
-    global netatmoDevList
-
-    if natatmoAuthorization == None:
-        #print ("%s %s %s %s" % (args.clientid, args.clientsecret, args.username, args.password))
-        natatmoAuthorization = lnetatmo.ClientAuth( clientId = args.clientid,
-                                                    clientSecret = args.clientsecret,
-                                                    username = args.username,
-                                                    password = args.password
-                                                   )
-    
-        netatmoDevList = lnetatmo.DeviceList(natatmoAuthorization)
-
-    return netatmoDevList
 
 
 def getSensorByName(config, sensorName):
