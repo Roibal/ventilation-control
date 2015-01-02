@@ -75,11 +75,17 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
 
         self.print_page_header(roomName)
-        self.wfile.write('<div id="container" style="width:100%; height:600px;"></div>\n')
+        self.wfile.write('<div id="container" style="width:100%; height:700px;"></div>\n')
         self.wfile.write('<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>\n')
         self.wfile.write('<script src="http://code.highcharts.com/stock/highstock.js"></script>\n')
 
         host = self.headers.get('Host')
+
+        # for info see:
+        # http://stackoverflow.com/questions/24634944/highcharts-4-0-3-stacked-bar-chart-bug-adds-%C3%A2
+        # http://forum.highcharts.com/highcharts-usage/problem-highcharts-tooltip-a-t30357/
+        # http://www.highcharts.com/docs/chart-and-series-types/combining-chart-types
+        # http://www.highcharts.com/stock/demo/candlestick-and-volume
 
         s = """
 <script type="text/javascript">
@@ -87,32 +93,40 @@ $(function () {
 
     $.getJSON('http://%s/%s.json?callback=?', function (data) {
         // split the data
-        var temp = [],
-            humid = [],
+        var insideTemperature = [],
+            insideHumidity = [],
+            outsideTemperature = [],
+            outsideHumidity = [],
             dataLength = data.length,
             i = 0;
 
         for (i; i < dataLength; i += 1) {
-            temp.push([
+            insideTemperature.push([
                 data[i][0], // the date
                 data[i][1]  // inside temp
             ]);
 
-            humid.push([
+            insideHumidity.push([
+                data[i][0], // the date
                 data[i][2] // inside humidity
+            ]);
+
+            outsideTemperature.push([
+                data[i][0], // the date
+                data[i][3]  // inside temp
+            ]);
+
+            outsideHumidity.push([
+                data[i][0], // the date
+                data[i][4] // inside humidity
             ]);
         }
 
         // Create the chart
         $('#container').highcharts('StockChart', {
 
-
             rangeSelector : {
                 selected : 1
-            },
-
-            title : {
-                text : 'Weather'
             },
 
             yAxis: [{
@@ -121,7 +135,7 @@ $(function () {
                     x: -3
                 },
                 title: {
-                    text: 'Inside temp'
+                    text: 'Inside'
                 },
                 height: '48%%',
                 lineWidth: 2
@@ -131,7 +145,7 @@ $(function () {
                     x: -3
                 },
                 title: {
-                    text: 'Inside Humid'
+                    text: 'Outside'
                 },
                 top: '52%%',
                 height: '48%%',
@@ -142,16 +156,38 @@ $(function () {
             series : [{
                 type: 'line',
                 name : 'Inside temperature',
-                data : temp,
+                data : insideTemperature,
+                yAxis: 0,
                 tooltip: {
-                    valueDecimals: 1
+                    valueDecimals: 1,
+                    pointFormat: '<span style="color:{series.color}">\u25CF</span> {series.name}: <b>{point.y}</b><br/>'
                 }
             }, {
                 type: 'line',
                 name : 'Inside humidity',
-                data : humid,
+                data : insideHumidity,
+                yAxis: 0,
                 tooltip: {
-                    valueDecimals: 0
+                    valueDecimals: 0,
+                    pointFormat: '<span style="color:{series.color}">\u25CF</span> {series.name}: <b>{point.y}</b><br/>'
+                }
+            }, {
+                type: 'line',
+                name : 'Ouside temperature',
+                data : outsideTemperature,
+                yAxis: 1,
+                tooltip: {
+                    valueDecimals: 1,
+                    pointFormat: '<span style="color:{series.color}">\u25CF</span> {series.name}: <b>{point.y}</b><br/>'
+                }
+            }, {
+                type: 'line',
+                name : 'Outside humidity',
+                data : outsideHumidity,
+                yAxis: 1,
+                tooltip: {
+                    valueDecimals: 0,
+                    pointFormat: '<span style="color:{series.color}">\u25CF</span> {series.name}: <b>{point.y}</b><br/>'
                 }
             }]
         });
