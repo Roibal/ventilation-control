@@ -135,7 +135,7 @@ $(function () {
                     x: -3
                 },
                 title: {
-                    text: 'Inside'
+                    text: 'Temperature'
                 },
                 height: '48%%',
                 lineWidth: 2
@@ -145,7 +145,7 @@ $(function () {
                     x: -3
                 },
                 title: {
-                    text: 'Outside'
+                    text: 'Humidity'
                 },
                 top: '52%%',
                 height: '48%%',
@@ -166,7 +166,7 @@ $(function () {
                 type: 'line',
                 name : 'Inside humidity',
                 data : insideHumidity,
-                yAxis: 0,
+                yAxis: 1,
                 tooltip: {
                     valueDecimals: 0,
                     pointFormat: '<span style="color:{series.color}">\u25CF</span> {series.name}: <b>{point.y}</b><br/>'
@@ -175,7 +175,7 @@ $(function () {
                 type: 'line',
                 name : 'Ouside temperature',
                 data : outsideTemperature,
-                yAxis: 1,
+                yAxis: 0,
                 tooltip: {
                     valueDecimals: 1,
                     pointFormat: '<span style="color:{series.color}">\u25CF</span> {series.name}: <b>{point.y}</b><br/>'
