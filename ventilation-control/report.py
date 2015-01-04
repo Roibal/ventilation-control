@@ -4,6 +4,7 @@
 from BaseHTTPServer import BaseHTTPRequestHandler,HTTPServer
 from os import curdir, sep
 import building
+import weathermath
 
 import contextlib
 import sqlite3
@@ -97,6 +98,8 @@ $(function () {
             insideHumidity = [],
             outsideTemperature = [],
             outsideHumidity = [],
+            insideHumidityAbs = [],
+            outsideHumidityAbs = [],
             dataLength = data.length,
             i = 0;
 
@@ -113,12 +116,22 @@ $(function () {
 
             outsideTemperature.push([
                 data[i][0], // the date
-                data[i][3]  // inside temp
+                data[i][3]  // outside temp
             ]);
 
             outsideHumidity.push([
                 data[i][0], // the date
-                data[i][4] // inside humidity
+                data[i][4] // outside humidity
+            ]);
+
+            insideHumidityAbs.push([
+                data[i][0], // the date
+                data[i][5] // inside humidity abs
+            ]);
+
+            outsideHumidityAbs.push([
+                data[i][0], // the date
+                data[i][6] // outside humidity abs
             ]);
         }
 
@@ -137,7 +150,7 @@ $(function () {
                 title: {
                     text: 'Temperature'
                 },
-                height: '48%%',
+                height: '30%%',
                 lineWidth: 2
             }, {
                 labels: {
@@ -147,8 +160,20 @@ $(function () {
                 title: {
                     text: 'Humidity'
                 },
-                top: '52%%',
-                height: '48%%',
+                top: '33%%',
+                height: '30%%',
+                offset: 0,
+                lineWidth: 2
+            }, {
+                labels: {
+                    align: 'right',
+                    x: -3
+                },
+                title: {
+                    text: 'Humidity Abs'
+                },
+                top: '66%%',
+                height: '34%%',
                 offset: 0,
                 lineWidth: 2
             }],
@@ -189,6 +214,24 @@ $(function () {
                     valueDecimals: 0,
                     pointFormat: '<span style="color:{series.color}">\u25CF</span> {series.name}: <b>{point.y}</b><br/>'
                 }
+            }, {
+                type: 'line',
+                name : 'Inside humidity abs',
+                data : insideHumidityAbs,
+                yAxis: 2,
+                tooltip: {
+                    valueDecimals: 0,
+                    pointFormat: '<span style="color:{series.color}">\u25CF</span> {series.name}: <b>{point.y}</b><br/>'
+                }
+            }, {
+                type: 'line',
+                name : 'Outside humidity abs',
+                data : outsideHumidityAbs,
+                yAxis: 2,
+                tooltip: {
+                    valueDecimals: 0,
+                    pointFormat: '<span style="color:{series.color}">\u25CF</span> {series.name}: <b>{point.y}</b><br/>'
+                }
             }]
         });
     });
@@ -217,7 +260,10 @@ $(function () {
                     # timestamp needs to be in milliseconds
                     timestamp *= 1000
 
-                    data.append( [int(timestamp), float(inside_temperature), float(inside_humidity), float(outside_temperature), float(outside_humidity)] )
+                    inside_humidity_abs = weathermath.AF(inside_humidity, inside_temperature)
+                    outside_humidity_abs = weathermath.AF(outside_humidity, outside_temperature)
+
+                    data.append( [int(timestamp), float(inside_temperature), float(inside_humidity), float(outside_temperature), float(outside_humidity), float(inside_humidity_abs), float(outside_humidity_abs)] )
         
         self.wfile.write('%s(\n' % callbackName)
         json.dump(data, self.wfile)
