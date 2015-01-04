@@ -33,6 +33,8 @@ if __name__ == "__main__":
 	parser.add_argument('--dump', help='Dump the database', action="store_true")
 	args = parser.parse_args()
 
+	dbcon = None
+
 	try:
 		dbcon = connect_db()
 
