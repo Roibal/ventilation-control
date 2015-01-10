@@ -20,10 +20,10 @@ def connect_db():
 
 	# check if meteorologist.db exists
 	if (not os.path.isfile('meteorologist.db')):
-		dbcon = sqlite3.connect('meteorologist.db')
+		dbcon = sqlite3.connect('meteorologist.db', detect_types=sqlite3.PARSE_DECLTYPES)
 		init_db(dbcon)
 	else:
-		dbcon = sqlite3.connect('meteorologist.db')
+		dbcon = sqlite3.connect('meteorologist.db', detect_types=sqlite3.PARSE_DECLTYPES)
 
 	return dbcon
 

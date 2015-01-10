@@ -70,9 +70,16 @@ class Actor:
     def setPowerOn(self, on):
         raise NotImplementedError( "Should have implemented this" )
 
+    def is_on(self):
+        raise NotImplementedError( "Should have implemented this" )        
+
 class DemoActor(Actor):
     def setPowerOn(self, on):
         print( "Switching actor %s to %r" % (self.name, on) )
+
+    def is_on(self):
+        return True
+
 
 class Room:
     name = "Room-with-no-name"
@@ -81,6 +88,7 @@ class Room:
     actor = None
     minInsideTemp = 0.0
     minHumidDiff = 0.0
+    ventilationDuration = 0.0
 
     def __str__(self):
         return "Room: " + self.name + "\n" + \
@@ -136,6 +144,7 @@ def createRoom(config, roomName):
     room.actor = getActorByName(config, actorName)
     room.minInsideTemp = config.getfloat(section, "MinimumInsideTemperaturInDegreeCentigrade")
     room.minHumidDiff = config.getfloat(section, "MinimumHumidityDifference")
+    room.ventilationDuration = config.getfloat(section, "VentilationDurationInMinutes")
 
     return room
 

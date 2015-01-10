@@ -16,7 +16,8 @@ CREATE INDEX 'weather_index' ON 'weather' ('date' DESC, 'room');
 DROP TABLE IF EXISTS 'actor_status';
 CREATE TABLE 'actor_status' (
   'room' text not null,
-  'powered_on' timestamp not null
+  'powered_on' timestamp not null,
+  'powered_off' timestamp
 );
 
 COMMIT;
