@@ -39,6 +39,7 @@ def start_ventilation(room, db):
 
 
 def process_room(room, db):
+    print("Control is processing room %s -------------" % room.name)
     # get recommendation
     c = db.cursor()
     c.execute('SELECT ventilation_recommended FROM weather WHERE room=? ORDER BY date DESC', (room.name, ))
@@ -50,39 +51,56 @@ def process_room(room, db):
         ventilation_recommended = row[0]
 
     # get actor status
-    c.execute('SELECT powered_on FROM actor_status WHERE room = ? AND powered_off IS NULL', (room.name, ))
+    c.execute('SELECT powered_on, powered_off FROM actor_status WHERE room = ? ORDER BY powered_on DESC', (room.name, ))
     row = c.fetchone()
 
     if not row:
         # no entry yet for room: power on actor if recommended by weather
-
-        # TODO check if we are in the greace periode and are not allowed to switch on !!!!!
-
         if ventilation_recommended:
-            print("New Entry - Start ventilation for %s"% (room.name, ))
+            print("No entry for room. Starting ventilation.")
             start_ventilation(room, db)
     else:
-        # actor was enabled before. Check if it
+        # actor was enabled before. Was it switched off again?
         powered_on_time = row[0]
+        powered_off_time = row[1]
 
-        print("powered on %s, powered on until %s, now %s" % (powered_on_time, powered_on_time + timedelta(minutes=room.ventilationDuration), datetime.now()))
+        if not powered_off_time:
+            # was not switched off
+            print("Ventilation is ON based on DB")
+            # should actor still be on?
+            if  powered_on_time + timedelta(minutes=room.ventilationDuration) < datetime.now():
+                # should be off now
+                if room.actor.is_on():
+                    print("Actor status is ON but should be OFF now, stopping...")
+                    stop_ventilation(room, db)
+                else:
+                    print("Actor status is OFF. Should be OFF anyhow, doing nothing.")
 
-        # should actor be on?
-        if  powered_on_time + timedelta(minutes=room.ventilationDuration) < datetime.now():
-            # should be off
-            if room.actor.is_on():
-                print("Stop ventilation for %s"% (room.name, ))
-                stop_ventilation(room, db)
             else:
-                print("Ventilation in %s already stopped"% (room.name, ))
+                # should be on
+                if not room.actor.is_on():
+                    print("Actor status is OFF but should be ON. Starting ventilation again.")
+                    start_ventilation(room, db)
+                else:
+                    print("Actor status is ON and should be ON, doing nothing.")
 
         else:
-            # should be on
-            if not room.actor.is_on():
-                print("Start ventilation for %s again"% (room.name, ))
-                start_ventilation(room, db)
+            # was switched off
+            print("Ventilation was ON and also switched OFF")
+            # check if we should switch it on again
+            # ventilationQuietTime
+            if  powered_off_time + timedelta(minutes=room.ventilationQuietTime) < datetime.now():
+                # switch on
+                print("Ventilation Quiet time passed")
+
+                if ventilation_recommended:
+                    print("Ventilation recommended, starting ventilation")
+                    start_ventilation(room, db)
+
             else:
-                print("Ventilation in %s already running"% (room.name, ))
+                print("Ventilation Quiet time in effect. Doing nothing.")
+
+
 
 
 def main():

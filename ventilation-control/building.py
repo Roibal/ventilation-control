@@ -89,6 +89,7 @@ class Room:
     minInsideTemp = 0.0
     minHumidDiff = 0.0
     ventilationDuration = 0.0
+    ventilationQuietTime = 0.0
 
     def __str__(self):
         return "Room: " + self.name + "\n" + \
@@ -145,6 +146,7 @@ def createRoom(config, roomName):
     room.minInsideTemp = config.getfloat(section, "MinimumInsideTemperaturInDegreeCentigrade")
     room.minHumidDiff = config.getfloat(section, "MinimumHumidityDifference")
     room.ventilationDuration = config.getfloat(section, "VentilationDurationInMinutes")
+    room.ventilationQuietTime = config.getfloat(section, "QuietTimeBetweenVentilationInMinutes")
 
     return room
 
