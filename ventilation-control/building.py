@@ -7,7 +7,6 @@ import sys
 sys.path.insert(0, '../lnetatmo')
 import lnetatmo
 
-sys.path.insert(0, '../Adafruit_Python_DHT')
 import Adafruit_DHT
 
 class Sensor:
@@ -151,8 +150,8 @@ def getSensorByName(config, sensorName):
         temperature = config.getfloat(sensorName, "Temperature")
         humidity = config.getfloat(sensorName, "Humidity")
         sensor = DemoSensor(temperature, humidity)
-    elif sensorType == "AM2303":
-        pin = config.get(actorName, "Pin")
+    elif sensorType == "AM2302":
+        pin = config.get(sensorName, "Pin")
         sensor = AM2302Sensor(pin)
 
     return sensor
