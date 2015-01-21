@@ -1,3 +1,6 @@
 [submodule "lnetatmo"]
 	path = lnetatmo
 	url = https://github.com/philippelt/netatmo-api-python.git
+[submodule "Adafruit_Python_DHT"]
+	path = Adafruit_Python_DHT
+	url = https://github.com/adafruit/Adafruit_Python_DHT.git
