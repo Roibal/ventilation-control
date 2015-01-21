@@ -7,6 +7,9 @@ import sys
 sys.path.insert(0, '../lnetatmo')
 import lnetatmo
 
+sys.path.insert(0, '../Adafruit_Python_DHT')
+import Adafruit_DHT
+
 class Sensor:
     def getHumidity(self):
         raise NotImplementedError( "Should have implemented this" )
@@ -63,6 +66,19 @@ class DemoSensor(Sensor):
     def getTemperature(self):
         #print("DEMO: getTemperature() %s" % self.temperature)
         return self.temperature
+
+class AM2302Sensor(Sensor):
+    def __init__(self, pin):
+        self.humidity, self.temperature = Adafruit_DHT.read_retry(Adafruit_DHT.AM2302, pin)
+
+    def getHumidity(self):
+        #print("DEMO: getHumidity() %s" % self.humidity)
+        return self.humidity
+
+    def getTemperature(self):
+        #print("DEMO: getTemperature() %s" % self.temperature)
+        return self.temperature
+
 
 class Actor:
     name = "Actor-with-no-name"
@@ -135,6 +151,9 @@ def getSensorByName(config, sensorName):
         temperature = config.getfloat(sensorName, "Temperature")
         humidity = config.getfloat(sensorName, "Humidity")
         sensor = DemoSensor(temperature, humidity)
+    elif sensorType == "AM2303":
+        pin = config.get(actorName, "Pin")
+        sensor = AM2302Sensor(pin)
 
     return sensor
 
