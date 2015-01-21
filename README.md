@@ -19,6 +19,4 @@ The control.py script starts and stops fans attached to a relay board attached t
 TODO
 ====
 
-* implement RasperyPi actor in building.py
-* implement DHT22 sensor in building.py
-* implement control.py
+* fix sensor connection in room constructor (am2302 blocks for room list in report)
