@@ -7,76 +7,90 @@ import sys
 sys.path.insert(0, '../lnetatmo')
 import lnetatmo
 
-import Adafruit_DHT
+
+try:
+    import Adafruit_DHT
+except ImportError:
+    pass
 
 class Sensor:
+    def __init__(self):
+        self.humidity = None
+        self.temperature = None
+
+    def data_available(self):
+        raise NotImplementedError( "Should have implemented this" )
+
     def getHumidity(self):
-        raise NotImplementedError( "Should have implemented this" )
+        #print("Sensor: getHumidity() %s" % self.humidity)
+        assert self.humidity
+        return self.humidity
+
     def getTemperature(self):
-        raise NotImplementedError( "Should have implemented this" )
+        #print("Sensor: getTemperature() %s" % self.temperature)
+        assert self.temperature
+        return self.temperature
 
 class NetatmoSensor(Sensor):
     def __init__(self, netatmoName):
+        Sensor.__init__(self)
         self.netatmoName = netatmoName
         self.natatmoAuthorization = None
+        self.netatmoDevList = None
 
-    def getNetatmoDevList(self):
-        netatmoDevList = None
-
-        if self.natatmoAuthorization == None:
-            config = ConfigParser.ConfigParser()
-            config.read("netatmo-auth.cfg")
-
-            if config.get("Netatmo_Auth", "clientsecret") == "":
-                raise RuntimeError('Netatmo authentication information are missing in netatmo-auth.cfg')
-
-            self.natatmoAuthorization = lnetatmo.ClientAuth( clientId = config.get("Netatmo_Auth", "clientid"),
-                                                             clientSecret = config.get("Netatmo_Auth", "clientsecret"),
-                                                             username = config.get("Netatmo_Auth", "username"),
-                                                             password = config.get("Netatmo_Auth", "password") )
+    def data_available(self):
+        if not self.netatmoDevList:
 
             if self.natatmoAuthorization == None:
-                raise RuntimeError('Netatmo authentication failed')
-        
-        netatmoDevList = lnetatmo.DeviceList(self.natatmoAuthorization)
+                config = ConfigParser.ConfigParser()
+                config.read("netatmo-auth.cfg")
 
-        if netatmoDevList == None:
-            raise RuntimeError('Could not get Netatmo device list')
+                if config.get("Netatmo_Auth", "clientsecret") == "":
+                    raise RuntimeError('Netatmo authentication information are missing in netatmo-auth.cfg')
 
-        return netatmoDevList
+                self.natatmoAuthorization = lnetatmo.ClientAuth( clientId = config.get("Netatmo_Auth", "clientid"),
+                                                                 clientSecret = config.get("Netatmo_Auth", "clientsecret"),
+                                                                 username = config.get("Netatmo_Auth", "username"),
+                                                                 password = config.get("Netatmo_Auth", "password") )
 
-    def getHumidity(self):
-        #print("Trying to get Humidity from %s" % self.netatmoName)
-        return self.getNetatmoDevList().lastData()[self.netatmoName]['Humidity']
+                if self.natatmoAuthorization == None:
+                    print('Netatmo authentication failed')
+                    return False
+            
+            self.netatmoDevList = lnetatmo.DeviceList(self.natatmoAuthorization)
 
-    def getTemperature(self):
-        #print("Trying to get Temperature from %s" % self.netatmoName)
-        return self.getNetatmoDevList().lastData()[self.netatmoName]['Temperature']
+            if self.netatmoDevList == None:
+                print('Could not get Netatmo device list')
+                return False
+
+        self.humidity = self.netatmoDevList.lastData()[self.netatmoName]['Humidity']
+        self.temperature = self.netatmoDevList.lastData()[self.netatmoName]['Temperature']
+
+        return True
 
 class DemoSensor(Sensor):
     def __init__(self, temperature, humidity):
-        self.temperature = temperature
-        self.humidity = humidity
+        Sensor.__init__(self)
+        self.t = temperature
+        self.h = humidity
 
-    def getHumidity(self):
-        #print("DEMO: getHumidity() %s" % self.humidity)
-        return self.humidity
+    def gather_data(self):
+        self.temperature = self.t
+        self.humidity = self.h
+        return True
 
-    def getTemperature(self):
-        #print("DEMO: getTemperature() %s" % self.temperature)
-        return self.temperature
 
 class AM2302Sensor(Sensor):
     def __init__(self, pin):
+        Sensor.__init__(self)
+
+    def gather_data(self):
         self.humidity, self.temperature = Adafruit_DHT.read_retry(Adafruit_DHT.AM2302, pin)
 
-    def getHumidity(self):
-        #print("DEMO: getHumidity() %s" % self.humidity)
-        return self.humidity
-
-    def getTemperature(self):
-        #print("DEMO: getTemperature() %s" % self.temperature)
-        return self.temperature
+        if self.humidity is not None and self.temperature is not None:
+            return True
+        else:
+            return False
 
 
 class Actor:
@@ -124,18 +138,24 @@ class Room:
     ventilationQuietTime = 0.0
 
     def __str__(self):
-        return "Room: " + self.name + "\n" + \
-            "  Temperature(in/out): " + \
-            str(self.insideSensor.getTemperature()) + " / " + \
-            str(self.outsideSensor.getTemperature()) + \
-            "\n" + \
-            "  Humidity(in/out): " + \
-            str(self.insideSensor.getHumidity()) + " / " + \
-            str(self.outsideSensor.getHumidity()) + \
-            "\n" + \
-            "  Minimum inside temperatur: " + str(self.minInsideTemp) + \
-            "\n" + \
-            "  Minimum Humidity difference: " + str(self.minHumidDiff)
+        result = "No data available"
+
+        if self.insideSensor.data_available() and self.outsideSensor.data_available():
+
+            result = "Room: " + self.name + "\n" + \
+                "  Temperature(in/out): " + \
+                str(self.insideSensor.getTemperature()) + " / " + \
+                str(self.outsideSensor.getTemperature()) + \
+                "\n" + \
+                "  Humidity(in/out): " + \
+                str(self.insideSensor.getHumidity()) + " / " + \
+                str(self.outsideSensor.getHumidity()) + \
+                "\n" + \
+                "  Minimum inside temperatur: " + str(self.minInsideTemp) + \
+                "\n" + \
+                "  Minimum Humidity difference: " + str(self.minHumidDiff)
+
+        return result
 
 
 def getSensorByName(config, sensorName):
