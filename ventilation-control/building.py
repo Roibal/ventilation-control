@@ -74,7 +74,7 @@ class DemoSensor(Sensor):
         self.t = temperature
         self.h = humidity
 
-    def gather_data(self):
+    def data_available(self):
         self.temperature = self.t
         self.humidity = self.h
         return True
@@ -84,7 +84,7 @@ class AM2302Sensor(Sensor):
     def __init__(self, pin):
         Sensor.__init__(self)
 
-    def gather_data(self):
+    def data_available(self):
         self.humidity, self.temperature = Adafruit_DHT.read_retry(Adafruit_DHT.AM2302, pin)
 
         if self.humidity is not None and self.temperature is not None:
