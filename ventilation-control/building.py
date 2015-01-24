@@ -83,9 +83,10 @@ class DemoSensor(Sensor):
 class AM2302Sensor(Sensor):
     def __init__(self, pin):
         Sensor.__init__(self)
+        self.pin = pin
 
     def data_available(self):
-        self.humidity, self.temperature = Adafruit_DHT.read_retry(Adafruit_DHT.AM2302, pin)
+        self.humidity, self.temperature = Adafruit_DHT.read_retry(Adafruit_DHT.AM2302, self.pin)
 
         if self.humidity is not None and self.temperature is not None:
             return True
@@ -224,7 +225,7 @@ def getRooms():
             roomName = sectionParts[1]
             room = createRoom(config, roomName)
             rooms.append(room)
-            print ("%s" % room)
+            #print ("%s" % room)
 
     return rooms
 
