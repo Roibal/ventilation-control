@@ -8,27 +8,28 @@ import database
 from datetime import datetime
 
 def processRoom(room, db):
-    insideTemp = room.insideSensor.getTemperature()
-    insideRelHumid = room.insideSensor.getHumidity()
-    insideAbsHumid = weathermath.AF(insideRelHumid, insideTemp)
+    if room.insideSensor.data_available() and room.outsideSensor.data_available():
+        insideTemp = room.insideSensor.getTemperature()
+        insideRelHumid = room.insideSensor.getHumidity()
+        insideAbsHumid = weathermath.AF(insideRelHumid, insideTemp)
 
-    outsideTemp = room.outsideSensor.getTemperature()
-    outsideRelHumid = room.outsideSensor.getHumidity()
-    outsideAbsHumid = weathermath.AF(outsideRelHumid, insideTemp)
+        outsideTemp = room.outsideSensor.getTemperature()
+        outsideRelHumid = room.outsideSensor.getHumidity()
+        outsideAbsHumid = weathermath.AF(outsideRelHumid, insideTemp)
 
-    recommendVentilation = False
-
-    if insideAbsHumid - room.minHumidDiff > outsideAbsHumid:
-        recommendVentilation = True
-
-    if insideTemp <= room.minInsideTemp:
         recommendVentilation = False
 
-    c = db.cursor()
-    c.execute('insert into weather (date, room, inside_temperature, inside_humidity, ' +
-              'outside_temperature, outside_humidity, ventilation_recommended) values ' +
-              '(?, ?, ?, ?, ?, ?, ?)', (datetime.now(), room.name, insideTemp, insideRelHumid, outsideTemp, outsideRelHumid, recommendVentilation))
-    db.commit()
+        if insideAbsHumid - room.minHumidDiff > outsideAbsHumid:
+            recommendVentilation = True
+
+        if insideTemp <= room.minInsideTemp:
+            recommendVentilation = False
+
+        c = db.cursor()
+        c.execute('insert into weather (date, room, inside_temperature, inside_humidity, ' +
+                  'outside_temperature, outside_humidity, ventilation_recommended) values ' +
+                  '(?, ?, ?, ?, ?, ?, ?)', (datetime.now(), room.name, insideTemp, insideRelHumid, outsideTemp, outsideRelHumid, recommendVentilation))
+        db.commit()
 
 def main():
 
