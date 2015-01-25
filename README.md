@@ -18,5 +18,3 @@ The control.py script starts and stops fans attached to a relay board attached t
 
 TODO
 ====
-
-* add power on to report

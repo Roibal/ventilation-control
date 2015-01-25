@@ -100,6 +100,7 @@ $(function () {
             outsideHumidity = [],
             insideHumidityAbs = [],
             outsideHumidityAbs = [],
+            powermarker = [],
             dataLength = data.length,
             i = 0;
 
@@ -111,7 +112,7 @@ $(function () {
 
             insideHumidity.push([
                 data[i][0], // the date
-                data[i][2] // inside humidity
+                data[i][2], // inside humidity
             ]);
 
             outsideTemperature.push([
@@ -132,6 +133,11 @@ $(function () {
             outsideHumidityAbs.push([
                 data[i][0], // the date
                 data[i][6] // outside humidity abs
+            ]);
+
+            powermarker.push([
+                data[i][0], // the date
+                data[i][7] // powermarker
             ]);
         }
 
@@ -163,7 +169,9 @@ $(function () {
                 top: '33%%',
                 height: '30%%',
                 offset: 0,
-                lineWidth: 2
+                lineWidth: 2,
+                min: 0,
+                max: 100
             }, {
                 labels: {
                     align: 'right',
@@ -232,6 +240,19 @@ $(function () {
                     valueDecimals: 0,
                     pointFormat: '<span style="color:{series.color}">\u25CF</span> {series.name}: <b>{point.y}</b><br/>'
                 }
+            }, {
+                name : 'Power on',
+                data : powermarker,
+                yAxis: 1,
+                lineWidth : 0,
+                marker : {
+                    enabled : true,
+                    radius : 5
+                },
+                tooltip: {
+                    valueDecimals: 0,
+                    pointFormat: '<span style="color:{series.color}">\u25CF</span> {series.name}: <b>{point.y}</b><br/>'
+                }
             }]
         });
     });
@@ -248,22 +269,22 @@ $(function () {
         self.send_header('Content-type', 'text/javascript')
         self.end_headers()
 
-'''
-indicates in the last column if power was on at the measruments time
+        #query = 'select date, inside_temperature, inside_humidity, outside_temperature, outside_humidity from weather where room=?'
 
+        # indicates in the last column if power was on at the measruments time
+        query = """
 select weather.date, weather.inside_temperature, weather.inside_humidity, weather.outside_temperature, weather.outside_humidity, 
 (
 select count(*) from actor_status where weather.room=actor_status.room and (powered_on between weather.date and datetime(weather.date, '+5 minutes'))
 ) AS was_powered_on
 from weather
-where weather.room='Hobbykeller';
-'''
-
+where weather.room=?;
+"""
         with contextlib.closing(sqlite3.connect('meteorologist.db',detect_types=sqlite3.PARSE_DECLTYPES)) as database:
             with contextlib.closing(database.cursor()) as cursor:
-                cursor.execute( 'select date, inside_temperature, inside_humidity, outside_temperature, outside_humidity from weather where room=?', (roomName,) )
+                cursor.execute( query, (roomName,) )
                 data = []
-                for date, inside_temperature, inside_humidity, outside_temperature, outside_humidity in cursor:
+                for date, inside_temperature, inside_humidity, outside_temperature, outside_humidity, was_powered_on in cursor:
                     # cut seconds and microsecound, we only have 5 min resolution
                     date = date.replace(second=0, microsecond=0)
                     # convert to unix timestamp
@@ -274,7 +295,16 @@ where weather.room='Hobbykeller';
                     inside_humidity_abs = weathermath.AF(inside_humidity, inside_temperature)
                     outside_humidity_abs = weathermath.AF(outside_humidity, outside_temperature)
 
-                    data.append( [int(timestamp), float(inside_temperature), float(inside_humidity), float(outside_temperature), float(outside_humidity), float(inside_humidity_abs), float(outside_humidity_abs)] )
+                    # we place the marker when power was switched on onto the inside humidity line.
+                    # The humidity graph has the range 0..100, so to "hide" the not-switched-on point
+                    # we set it to -1000
+                    powermarker = 0.0
+                    if was_powered_on == 1:
+                        powermarker = inside_humidity;
+                    else:
+                        powermarker = -1000
+
+                    data.append( [int(timestamp), float(inside_temperature), float(inside_humidity), float(outside_temperature), float(outside_humidity), float(inside_humidity_abs), float(outside_humidity_abs), float(powermarker)] )
         
         self.wfile.write('%s(\n' % callbackName)
         json.dump(data, self.wfile)
