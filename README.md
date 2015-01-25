@@ -19,4 +19,4 @@ The control.py script starts and stops fans attached to a relay board attached t
 TODO
 ====
 
-* fix sensor connection in room constructor (am2302 blocks for room list in report)
+* add power on to report

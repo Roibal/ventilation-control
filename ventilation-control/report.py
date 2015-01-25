@@ -248,6 +248,17 @@ $(function () {
         self.send_header('Content-type', 'text/javascript')
         self.end_headers()
 
+'''
+indicates in the last column if power was on at the measruments time
+
+select weather.date, weather.inside_temperature, weather.inside_humidity, weather.outside_temperature, weather.outside_humidity, 
+(
+select count(*) from actor_status where weather.room=actor_status.room and (powered_on between weather.date and datetime(weather.date, '+5 minutes'))
+) AS was_powered_on
+from weather
+where weather.room='Hobbykeller';
+'''
+
         with contextlib.closing(sqlite3.connect('meteorologist.db',detect_types=sqlite3.PARSE_DECLTYPES)) as database:
             with contextlib.closing(database.cursor()) as cursor:
                 cursor.execute( 'select date, inside_temperature, inside_humidity, outside_temperature, outside_humidity from weather where room=?', (roomName,) )
