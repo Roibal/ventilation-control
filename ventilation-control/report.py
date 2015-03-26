@@ -228,7 +228,7 @@ $(function () {
                 data : insideHumidityAbs,
                 yAxis: 2,
                 tooltip: {
-                    valueDecimals: 0,
+                    valueDecimals: 1,
                     pointFormat: '<span style="color:{series.color}">\u25CF</span> {series.name}: <b>{point.y}</b><br/>'
                 }
             }, {
@@ -237,7 +237,7 @@ $(function () {
                 data : outsideHumidityAbs,
                 yAxis: 2,
                 tooltip: {
-                    valueDecimals: 0,
+                    valueDecimals: 1,
                     pointFormat: '<span style="color:{series.color}">\u25CF</span> {series.name}: <b>{point.y}</b><br/>'
                 }
             }, {
