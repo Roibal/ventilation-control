@@ -15,7 +15,7 @@ def processRoom(room, db):
 
         outsideTemp = room.outsideSensor.getTemperature()
         outsideRelHumid = room.outsideSensor.getHumidity()
-        outsideAbsHumid = weathermath.AF(outsideRelHumid, insideTemp)
+        outsideAbsHumid = weathermath.AF(outsideRelHumid, outsideTemp)
 
         recommendVentilation = False
 
