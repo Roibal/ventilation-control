@@ -241,6 +241,7 @@ $(function () {
                     pointFormat: '<span style="color:{series.color}">\u25CF</span> {series.name}: <b>{point.y}</b><br/>'
                 }
             }, {
+                type : 'scatter',
                 name : 'Power on',
                 data : powermarker,
                 yAxis: 1,
